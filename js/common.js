@@ -28,10 +28,19 @@ const moveToPage = (page, input) => {
   }
 };
 
-const pagination = (inputValue, data) => {
-  console.log('페이지네이션', data);
-  console.log('페이지네이션', totalCount);
+const moveToPrevGroup = (pageGroup, input) => {
+  if (pageGroup > 1) {
+    moveToPage((pageGroup - 2) * groupSize + 1, input);
+  }
+};
 
+const moveToNextGroup = (pageGroup, totalPage, input) => {
+  if (pageGroup * groupSize < totalPage) {
+    moveToPage(pageGroup * groupSize + 1, input);
+  }
+};
+
+const pagination = (inputValue) => {
   const totalPage = Math.ceil(totalCount / numOfRows);
   const pageGroup = Math.ceil(pageNo / groupSize);
   const firstPage = (pageGroup - 1) * groupSize + 1;
@@ -40,17 +49,18 @@ const pagination = (inputValue, data) => {
   let paginationHtml = '';
   if (inputValue == 'Error') {
     paginationHtml = `
-    <button class="prevBtn" disabled><i class="fa-solid fa-angles-left"></i></button>
+    <button class="prevGroupBtn" disabled><i class="fa-solid fa-angles-left"></i></button>
     <button class="prevBtn" disabled><i class="fa-solid fa-angle-left"></i></button>
     <button class="on">1</button>
     <button class="nextBtn" disabled><i class="fa-solid fa-angle-right"></i></button>
-    <button class="nextBtn" disabled><i class="fa-solid fa-angles-right"></i></button>`;
+    <button class="nextGroupBtn" disabled><i class="fa-solid fa-angles-right"></i></button>`;
   } else {
     paginationHtml = `
     <button 
-    class="prevBtn" ${currentPage == 1 ? 'disabled' : ''} 
-    onclick="moveToPage(1, '${inputValue}')">
+    class="prevGroupBtn" ${pageGroup == 1 ? 'disabled' : ''} 
+    onclick="moveToPrevGroup(${pageGroup}, '${inputValue}')">
     <i class="fa-solid fa-angles-left"></i></button>
+
     <button 
     class="prevBtn" ${currentPage == 1 ? 'disabled' : ''} 
     onclick="moveToPage(${currentPage - 1}, '${inputValue}')">
@@ -69,9 +79,10 @@ const pagination = (inputValue, data) => {
     class="nextBtn" ${pageGroup * groupSize >= totalPage ? 'disabled' : ''}
     onclick="moveToPage(${currentPage + 1}, '${inputValue}')">
     <i class="fa-solid fa-angle-right"></i></button>
+    
     <button 
-    class="nextBtn" ${pageGroup * groupSize >= totalPage ? 'disabled' : ''}
-    onclick="moveToPage(${totalPage}, '${inputValue}')">
+    class="nextGroupBtn" ${pageGroup * groupSize >= totalPage ? 'disabled' : ''}
+    onclick="moveToNextGroup(${pageGroup},${totalPage},'${inputValue}')">
     <i class="fa-solid fa-angles-right"></i></button>`;
   }
 
@@ -185,10 +196,8 @@ const fetchData = async (url, inputValue) => {
       const dataList = data.response.body.items.item;
       totalCount = data.response.body.totalCount;
 
-      console.log(data);
-
       renderData(dataList);
-      pagination(inputValue, data);
+      pagination(inputValue);
       renderMap(dataList);
     } else {
       throw new Error(`"${inputValue}" 에 대한 <br>검색 결과가 없습니다`);
