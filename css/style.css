@@ -150,6 +150,7 @@ main .main-top {
   background-color: var(--color-lightpink);
   margin-top: 1rem;
   cursor: pointer;
+  transition: 0.3s;
 
   position: absolute;
   top: -0.5rem;
@@ -179,9 +180,10 @@ main .main-top {
   font-weight: 600;
   color: var(--color-hotpink);
 }
-.placeList .list .bookmarkBtn:hover {
+.placeList .item-wrap .bookmarkBtn:hover {
   color: var(--color-hover);
 }
+
 .placeList .mapPg {
   visibility: hidden;
   opacity: 0;
@@ -237,27 +239,27 @@ main .main-top {
 .placeList .pg-con {
   margin: 0 auto;
 
-  max-width: 55%;
+  max-width: 30%;
   display: flex;
   justify-content: space-between;
 }
 .placeList .pg-con > button {
-  margin: 1rem 3px;
-  height: 1.6rem;
   cursor: pointer;
+  margin: 1rem 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: var(--color-lightpink);
+  transition: 0.2s;
 
   font-size: 1rem;
   border: none;
-  background-color: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .placeList .pg-con > button:hover {
-  color: var(--color-point);
-}
-.placeList .pg-con > button.on {
-  background-color: var(--color-hotpink);
+  background-color: var(--color-point);
   color: white;
 }
 
@@ -294,8 +296,6 @@ footer p {
   }
   .placeList .pg-con {
     margin: 0 auto;
-    max-width: 100%;
-    flex-wrap: wrap;
-    justify-content: center;
+    max-width: 50%;
   }
 }
