@@ -3,7 +3,6 @@ const searchBtn = document.querySelector('.searchBtn');
 const listCon = document.querySelector('.listCon');
 const pgCon = document.querySelector('.pg-con');
 
-// const API_KEY = '17dd184d-7f12-4db5-a707-af167afa2e26';
 const API_KEY = 'e4dc51b5-cc55-47bb-bc9b-67a0b296b585';
 
 let numOfRows = 9;
@@ -16,13 +15,11 @@ const moveToPage = (page, input) => {
   pageNo = page;
   currentPage = page;
   if (input == 'undefined') {
-    const url = new URL(
-      `http://api.kcisa.kr/openapi/API_TOU_050/request?&pageNo=${pageNo}`
-    );
+    const url = new URL(`http://api.kcisa.kr/openapi/API_TOU_050/request?`);
     fetchData(url);
   } else {
     const url = new URL(
-      `http://api.kcisa.kr/openapi/API_TOU_050/request?&pageNo=${pageNo}&keyword=${input}`
+      `http://api.kcisa.kr/openapi/API_TOU_050/request?&keyword=${input}`
     );
     fetchData(url, input);
   }
@@ -40,7 +37,7 @@ const moveToNextGroup = (pageGroup, totalPage, input) => {
   }
 };
 
-const pagination = (inputValue) => {
+const pagination = (inputValue, itemQuantity) => {
   const totalPage = Math.ceil(totalCount / numOfRows);
   const pageGroup = Math.ceil(pageNo / groupSize);
   const firstPage = (pageGroup - 1) * groupSize + 1;
@@ -76,12 +73,12 @@ const pagination = (inputValue) => {
 
     paginationHtml += `
     <button 
-    class="nextBtn" ${pageGroup * groupSize >= totalPage ? 'disabled' : ''}
+    class="nextBtn" ${itemQuantity < numOfRows ? 'disabled' : ''}
     onclick="moveToPage(${currentPage + 1}, '${inputValue}')">
     <i class="fa-solid fa-angle-right"></i></button>
     
     <button 
-    class="nextGroupBtn" ${pageGroup * groupSize >= totalPage ? 'disabled' : ''}
+    class="nextGroupBtn" ${itemQuantity < numOfRows ? 'disabled' : ''}
     onclick="moveToNextGroup(${pageGroup},${totalPage},'${inputValue}')">
     <i class="fa-solid fa-angles-right"></i></button>`;
   }
@@ -197,7 +194,7 @@ const fetchData = async (url, inputValue) => {
       totalCount = data.response.body.totalCount;
 
       renderData(dataList);
-      pagination(inputValue);
+      pagination(inputValue, dataList.length);
       renderMap(dataList);
     } else {
       throw new Error(`"${inputValue}" 에 대한 <br>검색 결과가 없습니다`);

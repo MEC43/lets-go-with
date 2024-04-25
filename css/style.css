@@ -116,6 +116,9 @@ main .main-top {
 }
 
 .placeList .item-wrap {
+  height: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 0.3rem;
   min-height: 100%;
 
@@ -292,5 +295,7 @@ footer p {
   .placeList .pg-con {
     margin: 0 auto;
     max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
