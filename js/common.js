@@ -107,7 +107,6 @@ const renderData = (dataList) => {
 const errorRender = (err) => {
   const errMsg = `<li class="no-list"> ${err} </li>`;
   listCon.innerHTML = errMsg;
-  userInput.value = '';
 };
 
 const fetchData = async (keyword, pageNo) => {
