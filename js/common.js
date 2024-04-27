@@ -1,52 +1,40 @@
-const userInput = document.querySelector('.searchInput');
-const searchBtn = document.querySelector('.searchBtn');
-const listCon = document.querySelector('.listCon');
-const pgCon = document.querySelector('.pg-con');
-
-const prevBtn = document.querySelector('.prevBtn');
-const nextBtn = document.querySelector('.nextBtn');
-
 const API_KEY = 'e4dc51b5-cc55-47bb-bc9b-67a0b296b585';
+const BASE_URL = 'http://api.kcisa.kr/openapi/API_TOU_050/request';
 
-let numOfRows = 9;
-let pageNo = 1;
-let totalCount = 0;
-let groupSize = 10;
-let keyword = '';
+const placeListCon = document.querySelector('.listCon');
+const prevBtn = document.querySelector('.pg-con>.prevBtn');
+const nextBtn = document.querySelector('.pg-con>.nextBtn');
+const searchBtn = document.querySelector('.searchBtn');
+const userInput = document.querySelector('.searchInput');
+
+let numOfRows = 9; //세션당 요청레코드수
+let pageNo = 1; //페이지수
+let keyword = ''; //검색어
 
 const searchFn = () => {
   pageNo = 1;
-  keyword = userInput.value;
-  fetchData(keyword, pageNo);
+  const searchValue = userInput.value;
+  keyword = searchValue;
+  getData(keyword);
   userInput.value = '';
 };
 
-const renderMap = (
-  latitude,
-  longitude,
-  placeTitle,
-  placeAdress,
-  placeInfo,
-  mapPgEl
-) => {
-  lati = parseFloat(latitude.toString().replace(/[^\d.-]/g, ''));
-  longi = parseFloat(longitude.toString().replace(/[^\d.-]/g, ''));
-
-  mapPgEl.innerHTML = `
-  <div class="mapArea">
-  <div class="info">
-    <strong class="title">${placeTitle}</strong>
-    <span class="address">${placeAdress}</span>
-    <span class="desc">${placeInfo}</span>
-  </div>
-  <div class="map"></div>
-  <i class="fa-solid fa-xmark closeBtn"></i>
-  </div>
-  `;
+const favOn = (bookMarkBtn) => {
+  bookMarkBtn.classList.toggle('fav');
+};
+const closeMap = (mapPgEl) => {
+  mapPgEl.classList.remove('active');
+  mapPgEl.innerHTML = '';
+};
+const activeMap = (mapPgEl) => {
+  mapPgEl.classList.add('active');
+};
+const renderMap = (placeData, mapPgEl, placeTitle) => {
+  let [latitude, longitude] = placeData.coordinates.split(',');
+  let lati = Number(latitude.replace(/[^\d.-]/g, ''));
+  let longi = Number(longitude.replace(/[^\d.-]/g, ''));
 
   const mapContainer = mapPgEl.querySelector('.map');
-  console.log(mapContainer);
-
   const mapOption = {
     center: new kakao.maps.LatLng(lati, longi),
     level: 3,
@@ -71,54 +59,70 @@ const renderMap = (
 
   infowindow.open(map, marker);
 };
+const createMapArea = (placeData, mapPgEl) => {
+  const placeTitle = placeData.title;
+  const placeAdress = placeData.address.substring(8);
+  const placeInfo = placeData.description
+    ? placeData.description
+    : '세부정보가 없습니다';
 
-const createHtml = (data) => {
-  let placeTitle = data.title;
-  let placeAdress = data.address.substring(8);
-  let placeTel = data.tel ? data.tel : '';
-  let placeInfo = data.description;
+  mapPgEl.innerHTML = `
+  <div class="mapArea">
+    <div class="info">
+        <strong class="title">${placeTitle}</strong>
+        <span class="address">${placeAdress}</span>
+        <span class="desc">${placeInfo}</span>
+    </div>
+    <div class="map"></div>
+    <i class="fa-solid fa-xmark closeBtn" 
+    onclick='closeMap(this.parentElement.parentElement)'></i>
+  </div>
+  `;
 
-  let coordinates = data.coordinates;
-  let [latitude, longitude] = coordinates.split(',');
+  renderMap(placeData, mapPgEl, placeTitle);
+};
+
+const createHtml = (place) => {
+  const placeTitle = place.title;
+  const placeAdress = place.address.substring(8);
+  const placeTel = place.tel ? place.tel : '';
+  const placeInfo = place.description
+    ? place.description
+    : '세부정보가 없습니다';
+  const placeData = JSON.stringify(place);
 
   return `
     <li class="list">
-      <div class="item-wrap">
-          <strong class="title">${placeTitle}</strong>
-          <span class="address">${placeAdress}</span>
-          <span class="tel">${placeTel}</span></span>
-          <span class="desc">${placeInfo}</span>
-          <button class="bookmarkBtn"></button>
-          <button class="more"
-          onclick="renderMap('${latitude}','${longitude}', '${placeTitle}', '${placeAdress}','${placeInfo}', this.parentElement.nextElementSibling)">
-          지도보기</button>
-      </div>
-      <div class="mapPg">
-      </div>
-    </li>   
+        <div class="item-wrap">
+            <strong class="title">${placeTitle}</strong>
+            <span class="address">${placeAdress}</span>
+            <span class="tel">${placeTel}</span></span>
+            <span class="desc">${placeInfo}</span>
+            <button class="bookmarkBtn" onclick='favOn(this)'></button>
+            <button class="more" 
+            onclick='createMapArea(${placeData}, this.parentElement.nextElementSibling); 
+            activeMap(this.parentElement.nextElementSibling)'>지도보기</button>
+        </div>
+        <div class="mapPg">
+        </div>
+    </li>
     `;
 };
 
 const renderData = (dataList) => {
-  const dataHtml = dataList.map((data) => createHtml(data)).join('');
-  listCon.innerHTML = dataHtml;
+  const placeListHtml = dataList.map((place) => createHtml(place)).join('');
+  placeListCon.innerHTML = placeListHtml;
 };
 
-const errorRender = (err) => {
-  const errMsg = `<li class="no-list"> ${err} </li>`;
-  listCon.innerHTML = errMsg;
+const renderError = (err) => {
+  placeListCon.innerHTML = `
+  <div class="no-list">
+  <i class="fa-solid fa-dog"></i> ${err} <i class="fa-solid fa-cat"></i>
+  </div>`;
 };
 
-const fetchData = async (keyword, pageNo) => {
-  const url = new URL(`http://api.kcisa.kr/openapi/API_TOU_050/request?`);
+const fetchData = async (url) => {
   try {
-    url.searchParams.append('numOfRows', numOfRows);
-    url.searchParams.append('pageNo', pageNo);
-    url.searchParams.append('serviceKey', API_KEY);
-    if (keyword) {
-      url.searchParams.append('keyword', keyword);
-    }
-
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -129,58 +133,52 @@ const fetchData = async (keyword, pageNo) => {
 
     if (data.response.body.items) {
       const dataList = data.response.body.items.item;
-      totalCount = data.response.body.totalCount;
 
-      if (dataList.length < numOfRows) {
-        nextBtn.disabled = true;
-      } else {
-        nextBtn.disabled = false;
-      }
       if (pageNo === 1) {
         prevBtn.disabled = true;
       } else {
         prevBtn.disabled = false;
       }
+      if (dataList.length < numOfRows) {
+        nextBtn.disabled = true;
+      } else {
+        nextBtn.disabled = false;
+      }
 
       renderData(dataList);
     } else {
-      throw new Error(`"${inputValue}" 에 대한 <br>검색 결과가 없습니다`);
+      nextBtn.disabled = true;
+      throw new Error(`"${keyword}" 에 대한 <br>검색 결과가 없습니다.`);
     }
   } catch (error) {
-    console.error();
-    errorRender(error.message);
+    renderError(error.message);
   }
 };
 
-fetchData(keyword, pageNo);
+const getData = () => {
+  const url = new URL(`${BASE_URL}?serviceKey=${API_KEY}`);
+  url.searchParams.append('numOfRows', numOfRows);
+  url.searchParams.append('pageNo', pageNo);
+  if (keyword) {
+    url.searchParams.append('keyword', keyword);
+  }
 
-listCon.addEventListener('click', (e) => {
-  const parentDiv = e.target.closest('div');
-  if (e.target.tagName == 'BUTTON' && e.target.classList.contains('more')) {
-    parentDiv.nextSibling.nextSibling.classList.add('active');
-  }
-  if (e.target.tagName == 'I' && e.target.classList.contains('closeBtn')) {
-    parentDiv.parentElement.classList.remove('active');
-  }
-  if (
-    e.target.tagName == 'BUTTON' &&
-    e.target.classList.contains('bookmarkBtn')
-  ) {
-    e.target.classList.toggle('fav');
-  }
-});
+  fetchData(url);
+};
+
+getData();
+
 userInput.addEventListener('keypress', (e) => {
   if (e.key != 'Enter') return;
   searchFn();
 });
 searchBtn.addEventListener('click', searchFn);
+
 prevBtn.addEventListener('click', () => {
-  if (pageNo === 1) return;
   pageNo--;
-  fetchData(keyword, pageNo);
+  getData(pageNo);
 });
 nextBtn.addEventListener('click', () => {
-  if (pageNo === Math.ceil(totalCount / numOfRows)) return;
   pageNo++;
-  fetchData(keyword, pageNo);
+  getData(pageNo);
 });
